@@ -1,8 +1,6 @@
 // src/App.jsx
 import React, { useEffect, useState } from 'react';
 import './App.css';
-// اگر می‌خواهید از فایل JSON محلی استفاده کنید:
-import bitcoinData from './bitcoinPrice.json';
 
 function App() {
   const [price, setPrice] = useState(null);
@@ -10,44 +8,29 @@ function App() {
   const [error, setError] = useState(null);
 
   useEffect(() => {
-    // روش اول: استفاده از فایل JSON محلی
-    // (فایل bitcoinPrice.json را در src قرار دهید)
-    
-    try {
-      setTimeout(() => {
-        const bitcoinPrice = bitcoinData.bpi.USD.rate;
+    // دریافت داده از فایل JSON در GitHub با fetch و .then
+    fetch('https://raw.githubusercontent.com/rouhollahasadi/bitcoinFetch/refs/heads/main/src/bitcoinPrice.json')
+      .then(response => {
+        // بررسی وضعیت پاسخ
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        return response.json(); // تبدیل به JSON
+      })
+      .then(data => {
+        // استخراج قیمت از داده‌های دریافت شده
+        const bitcoinPrice = data.bpi.USD.rate;
         setPrice(bitcoinPrice);
         setLoading(false);
-      }, 500);
-    } catch (err) {
-      setError('خطا در خواندن فایل داده');
-      setLoading(false);
-    }
-    
-
-    // روش دوم: استفاده از API واقعی (پیشنهادی)
-    // const fetchPrice = async () => {
-    //   try {
-    //     setLoading(true);
-    //     const response = await fetch('https://api.coindesk.com/v1/bpi/currentprice/USD.json');
-        
-    //     if (!response.ok) {
-    //       throw new Error(`HTTP error! status: ${response.status}`);
-    //     }
-        
-    //     const data = await response.json();
-    //     setPrice(data.bpi.USD.rate);
-    //     setError(null);
-    //   } catch (err) {
-    //     setError(err.message);
-    //     setPrice(null);
-    //   } finally {
-    //     setLoading(false);
-    //   }
-    // };
-
-    //fetchPrice();
-  }, []);
+        console.log('قیمت دریافت شد:', bitcoinPrice);
+      })
+      .catch(error => {
+        // مدیریت خطا
+        console.error('خطا در دریافت داده:', error);
+        setError('خطا در دریافت داده: ' + error.message);
+        setLoading(false);
+      });
+  }, []); // آرایه خالی = فقط یک بار اجرا شود
 
   // نمایش وضعیت بارگذاری
   if (loading) {
@@ -90,7 +73,7 @@ function App() {
       </div>
       
       <p className="update-info rtl-text">
-        🔄 داده‌ها از API CoinDesk دریافت شده‌اند
+        🔄 داده‌ها از فایل JSON در GitHub دریافت شده‌اند
       </p>
     </div>
   );
